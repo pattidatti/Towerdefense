@@ -1,0 +1,25 @@
+{
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        "public/Assets/Terrain/Tiles.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "public/Assets/tiled-filer/Tilemap_color1.tsx": {
+            "dynamicWrapping": false
+        }
+    },
+    "last.imagePath": "C:/Users/Eirik/Towerdefense/public/Assets/Terrain/Tileset",
+    "map.lastUsedFormat": "tmx",
+    "openFiles": [
+    ],
+    "project": "maps-tiled.tiled-project",
+    "recentFiles": [
+        "public/Assets/Terrain/Tiles.tsx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.type": 0
+}
