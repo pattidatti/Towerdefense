@@ -36,7 +36,7 @@ export class Tower {
     }
     this.target = best
 
-    if (this.target && this.cooldownTimer === 0) {
+    if (this.target && this.cooldownTimer <= 0) {
       this.cooldownTimer = this.def.cooldown
       return new Projectile(this.x, this.y, this.target, this.def.damage)
     }

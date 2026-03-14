@@ -33,7 +33,9 @@ export async function loadMap(mapUrl: string): Promise<GameMap> {
   const parser = new DOMParser()
 
   // Fetch and parse .tmx
-  const tmxText = await fetch(mapUrl).then(r => r.text())
+  const tmxResponse = await fetch(mapUrl)
+  if (!tmxResponse.ok) throw new Error(`Kunne ikke laste kart: ${mapUrl} (${tmxResponse.status})`)
+  const tmxText = await tmxResponse.text()
   const tmxDoc = parser.parseFromString(tmxText, 'text/xml')
   const mapEl = tmxDoc.querySelector('map')!
 
@@ -50,7 +52,9 @@ export async function loadMap(mapUrl: string): Promise<GameMap> {
 
     if (source) {
       const tsxUrl = resolveUrl(source, mapUrl)
-      const tsxText = await fetch(tsxUrl).then(r => r.text())
+      const tsxResponse = await fetch(tsxUrl)
+      if (!tsxResponse.ok) throw new Error(`Kunne ikke laste tileset: ${tsxUrl} (${tsxResponse.status})`)
+      const tsxText = await tsxResponse.text()
       const tsxDoc = parser.parseFromString(tsxText, 'text/xml')
       const tsxEl = tsxDoc.querySelector('tileset')!
       const imgEl = tsxDoc.querySelector('image')!
