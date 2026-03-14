@@ -48,7 +48,7 @@ export class WaveManager {
         t += group.interval
       }
     }
-    this.spawning = true
+    this.spawning = this.queue.length > 0
   }
 
   update(dt: number): Enemy[] {

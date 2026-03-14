@@ -7,6 +7,7 @@ import { getLevel } from '../data/levels'
 import type { TowerDef } from '../data/towers'
 import HUD from './HUD'
 import EndScreen from './EndScreen'
+import { unlockLevel } from './LevelSelect'
 import './GameView.css'
 
 const HUD_HEIGHT = 88
@@ -23,6 +24,14 @@ export default function GameView() {
   const [selectedTower, setSelectedTower] = useState<TowerDef | null>(null)
   const [loadError, setLoadError] = useState(false)
   const [resetKey, setResetKey] = useState(0)
+
+  // Unlock next level on victory
+  useEffect(() => {
+    if (gameState?.victory && levelId) {
+      const nextLevel = Number(levelId) + 1
+      if (nextLevel <= 3) unlockLevel(nextLevel)
+    }
+  }, [gameState?.victory, levelId])
 
   // Sync selected tower to game
   useEffect(() => {
@@ -41,7 +50,7 @@ export default function GameView() {
   // Init / re-init game
   useEffect(() => {
     const level = getLevel(Number(levelId))
-    if (!level) { navigate('/levels'); return }
+    if (!level) { setLoadError(true); return }
 
     const canvas = canvasRef.current
     const container = containerRef.current
