@@ -6,9 +6,10 @@ import { Game, type GameState } from '../engine/Game'
 import { getLevel } from '../data/levels'
 import type { TowerDef } from '../data/towers'
 import HUD from './HUD'
+import EndScreen from './EndScreen'
 import './GameView.css'
 
-const HUD_HEIGHT = 88  // top bar (44) + tower bar (44)
+const HUD_HEIGHT = 88
 
 export default function GameView() {
   const { levelId } = useParams()
@@ -21,13 +22,23 @@ export default function GameView() {
   const [gameState, setGameState] = useState<GameState | null>(null)
   const [selectedTower, setSelectedTower] = useState<TowerDef | null>(null)
   const [loadError, setLoadError] = useState(false)
+  const [resetKey, setResetKey] = useState(0)
 
-  // Keep game's selectedTowerDef in sync
+  // Sync selected tower to game
   useEffect(() => {
     if (gameRef.current) gameRef.current.selectedTowerDef = selectedTower
   }, [selectedTower])
 
-  // Init game
+  // ESC cancels tower selection
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectedTower(null)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
+  // Init / re-init game
   useEffect(() => {
     const level = getLevel(Number(levelId))
     if (!level) { navigate('/levels'); return }
@@ -38,6 +49,8 @@ export default function GameView() {
 
     const ctx = canvas.getContext('2d')!
     ctx.imageSmoothingEnabled = false
+    setLoadError(false)
+    setSelectedTower(null)
 
     let game: Game
 
@@ -48,7 +61,6 @@ export default function GameView() {
       const availH = container.clientHeight - HUD_HEIGHT
       const scale = Math.min(availW / pixelWidth, availH / pixelHeight)
       scaleRef.current = scale
-
       canvas.width = pixelWidth
       canvas.height = pixelHeight
       canvas.style.transform = `scale(${scale})`
@@ -64,8 +76,7 @@ export default function GameView() {
         const map = await loadMap(mapUrl)
         const renderer = new Renderer(ctx)
         await renderer.loadTilesets(map.tilesets)
-
-        game = new Game(ctx, map, renderer, level.path, level.waves, (s) => setGameState({ ...s }))
+        game = new Game(ctx, map, renderer, level.path, level.waves, s => setGameState({ ...s }))
         gameRef.current = game
         resize()
         await game.loadSprites(import.meta.env.BASE_URL)
@@ -85,12 +96,10 @@ export default function GameView() {
       gameRef.current?.stop()
       gameRef.current = null
     }
-  }, [levelId, navigate])
+  }, [levelId, navigate, resetKey])
 
-  // Convert screen click → canvas coords
-  const toCanvasCoords = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current!
-    const rect = canvas.getBoundingClientRect()
+  const toCanvas = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const rect = canvasRef.current!.getBoundingClientRect()
     return {
       x: (e.clientX - rect.left) / scaleRef.current,
       y: (e.clientY - rect.top) / scaleRef.current,
@@ -99,19 +108,17 @@ export default function GameView() {
 
   const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!gameRef.current) return
-    const { x, y } = toCanvasCoords(e)
+    const { x, y } = toCanvas(e)
     gameRef.current.tryPlaceTower(x, y)
-  }, [toCanvasCoords])
+  }, [toCanvas])
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!gameRef.current) return
-    const { x, y } = toCanvasCoords(e)
+    const { x, y } = toCanvas(e)
     gameRef.current.setHover(x, y)
-  }, [toCanvasCoords])
+  }, [toCanvas])
 
-  const handleMouseLeave = useCallback(() => {
-    if (gameRef.current) gameRef.current.setHover(-999, -999)
-  }, [])
+  const gameOver = gameState?.gameOver || gameState?.victory
 
   return (
     <div ref={containerRef} className="game-view">
@@ -121,6 +128,7 @@ export default function GameView() {
           selected={selectedTower}
           onSelectTower={setSelectedTower}
           onStartWave={() => gameRef.current?.startNextWave()}
+          onToggleSpeed={() => gameRef.current?.toggleSpeed()}
           onQuit={() => navigate('/levels')}
         />
       )}
@@ -137,9 +145,20 @@ export default function GameView() {
         className="game-canvas"
         onClick={handleClick}
         onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
+        onMouseLeave={() => gameRef.current?.setHover(-999, -999)}
         style={{ cursor: selectedTower ? 'crosshair' : 'default' }}
       />
+
+      {gameState && gameOver && (
+        <EndScreen
+          victory={gameState.victory}
+          wave={gameState.wave}
+          totalWaves={gameState.totalWaves}
+          enemiesKilled={gameState.enemiesKilled}
+          onRetry={() => setResetKey(k => k + 1)}
+          onLevels={() => navigate('/levels')}
+        />
+      )}
     </div>
   )
 }

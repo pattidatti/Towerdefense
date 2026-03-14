@@ -16,9 +16,19 @@ export interface GameState {
   canStartWave: boolean
   gameOver: boolean
   victory: boolean
+  waveNotify: boolean
+  speed: number
+  enemiesKilled: number
 }
 
 export interface PathPoint { col: number; row: number }
+
+interface Particle {
+  x: number; y: number
+  vx: number; vy: number
+  life: number; maxLife: number
+  color: string; r: number
+}
 
 function computePathTiles(points: PathPoint[]): Set<string> {
   const set = new Set<string>()
@@ -44,9 +54,14 @@ export class Game {
   private enemies: Enemy[] = []
   private towers: Tower[] = []
   private projectiles: Projectile[] = []
+  private particles: Particle[] = []
   private waveManager: WaveManager
   private pathTiles: Set<string>
   private sprites: GameSprites | null = null
+  private waveNotifyTimer = 0
+  private timeScale = 1
+
+  private readonly initWaypoints: Waypoint[]
 
   state: GameState
   selectedTowerDef: TowerDef | null = null
@@ -70,13 +85,18 @@ export class Game {
     this.map = map
     this.renderer = renderer
     this.pathTiles = computePathTiles(pathPoints)
-    this.waveManager = new WaveManager(waves, toWaypoints(pathPoints, map.tileWidth, map.tileHeight))
+    this.initWaypoints = toWaypoints(pathPoints, map.tileWidth, map.tileHeight)
+    this.waveManager = new WaveManager(waves, this.initWaypoints)
     this.onStateChange = onStateChange
-    this.state = {
-      lives: 20, gold: 150, wave: 0,
-      totalWaves: waves.length,
+    this.state = this.initialState(waves.length)
+  }
+
+  private initialState(totalWaves: number): GameState {
+    return {
+      lives: 20, gold: 150, wave: 0, totalWaves,
       waveActive: false, canStartWave: true,
       gameOver: false, victory: false,
+      waveNotify: false, speed: 1, enemiesKilled: 0,
     }
   }
 
@@ -96,6 +116,12 @@ export class Game {
     this.started = false
   }
 
+  toggleSpeed(): void {
+    this.timeScale = this.timeScale === 1 ? 2 : 1
+    this.state.speed = this.timeScale
+    this.onStateChange({ ...this.state })
+  }
+
   startNextWave(): void {
     if (this.state.waveActive || this.state.gameOver || this.state.victory) return
     if (!this.waveManager.hasNextWave) return
@@ -103,6 +129,8 @@ export class Game {
     this.state.wave++
     this.state.waveActive = true
     this.state.canStartWave = false
+    this.state.waveNotify = true
+    this.waveNotifyTimer = 2.5
     this.onStateChange({ ...this.state })
   }
 
@@ -133,14 +161,24 @@ export class Game {
   // ── Loop ─────────────────────────────────────────────────────────────────
 
   private loop = (ts: number) => {
-    const dt = Math.min((ts - this.lastTime) / 1000, 0.1)
+    const raw = Math.min((ts - this.lastTime) / 1000, 0.1)
+    const dt = raw * this.timeScale
     this.lastTime = ts
-    this.update(dt)
+    this.update(dt, raw)
     this.draw()
     this.rafId = requestAnimationFrame(this.loop)
   }
 
-  private update(dt: number): void {
+  private update(dt: number, rawDt: number): void {
+    // Wave notify timer (real time, not scaled)
+    if (this.waveNotifyTimer > 0) {
+      this.waveNotifyTimer -= rawDt
+      if (this.waveNotifyTimer <= 0) {
+        this.state.waveNotify = false
+        this.waveNotifyTimer = 0
+      }
+    }
+
     if (this.state.gameOver || this.state.victory) return
 
     this.enemies.push(...this.waveManager.update(dt))
@@ -160,15 +198,27 @@ export class Game {
 
     for (const p of this.projectiles) p.update(dt)
 
+    // Collect gold + spawn particles for killed enemies
     for (const e of this.enemies) {
       if (!e.alive && !e.goldCollected) {
         this.state.gold += e.reward
+        this.state.enemiesKilled++
         e.goldCollected = true
+        this.spawnDeathParticles(e.x, e.y, e.color)
       }
+    }
+
+    // Update particles
+    for (const p of this.particles) {
+      p.x += p.vx * dt
+      p.y += p.vy * dt
+      p.vy += 80 * dt
+      p.life -= dt
     }
 
     this.enemies = this.enemies.filter(e => e.alive)
     this.projectiles = this.projectiles.filter(p => !p.done)
+    this.particles = this.particles.filter(p => p.life > 0)
 
     if (this.state.waveActive && !this.waveManager.spawning && this.enemies.length === 0) {
       this.state.waveActive = false
@@ -182,6 +232,23 @@ export class Game {
     this.onStateChange({ ...this.state })
   }
 
+  private spawnDeathParticles(x: number, y: number, color: string): void {
+    const count = 8
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4
+      const speed = 25 + Math.random() * 55
+      const life = 0.35 + Math.random() * 0.3
+      this.particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 30,
+        life, maxLife: life,
+        color,
+        r: 1.5 + Math.random() * 2.5,
+      })
+    }
+  }
+
   // ── Draw ─────────────────────────────────────────────────────────────────
 
   private draw(): void {
@@ -193,12 +260,13 @@ export class Game {
     this.drawPlacementPreview()
     this.drawTowers()
     this.drawEnemies()
+    this.drawParticles()
     this.drawProjectiles()
   }
 
   private drawPath(): void {
     const { ctx, map } = this
-    ctx.fillStyle = 'rgba(160, 100, 40, 0.4)'
+    ctx.fillStyle = 'rgba(155, 95, 35, 0.42)'
     for (const key of this.pathTiles) {
       const [col, row] = key.split(',').map(Number)
       if (col >= 0 && col < map.width && row >= 0 && row < map.height) {
@@ -229,8 +297,7 @@ export class Game {
     const ts = map.tileWidth
 
     for (const t of this.towers) {
-      // Range ring
-      ctx.strokeStyle = 'rgba(100,200,255,0.15)'
+      ctx.strokeStyle = 'rgba(100,200,255,0.12)'
       ctx.lineWidth = 1
       ctx.beginPath()
       ctx.arc(t.x, t.y, t.def.range, 0, Math.PI * 2)
@@ -238,7 +305,6 @@ export class Game {
 
       if (sprites) {
         const img = t.def.id === 'arrow' ? sprites.arrowBuilding : sprites.magicBuilding
-        // Scale to ~1.5 tiles wide, preserve ratio
         const bw = ts * 1.6
         const bh = bw * (img.naturalHeight / img.naturalWidth)
         ctx.drawImage(img, t.x - bw / 2, t.y - bh + ts * 0.55, bw, bh)
@@ -251,12 +317,11 @@ export class Game {
         ctx.strokeRect(t.x - half, t.y - half, half * 2, half * 2)
       }
 
-      // Barrel toward target
       if (t.target) {
         const dx = t.target.x - t.x
         const dy = t.target.y - t.y
         const len = Math.sqrt(dx * dx + dy * dy)
-        ctx.strokeStyle = 'rgba(80,80,80,0.85)'
+        ctx.strokeStyle = 'rgba(60,60,60,0.8)'
         ctx.lineWidth = 2.5
         ctx.lineCap = 'round'
         ctx.beginPath()
@@ -269,11 +334,10 @@ export class Game {
 
   private drawEnemies(): void {
     const { ctx, sprites } = this
-    const SIZE = 72   // sprite draw size (px) — frames are 192x192 mostly empty
+    const SIZE = 72
 
     for (const e of this.enemies) {
-      const flipH = e.vx < 0  // sprite naturally faces right
-
+      const flipH = e.vx < 0
       if (sprites) {
         const sheet = e.id === 'orc' ? sprites.orc : sprites.goblin
         sheet.draw(ctx, 'run', e.animTime, e.x - SIZE / 2, e.y - SIZE / 2, SIZE, SIZE, flipH)
@@ -284,7 +348,6 @@ export class Game {
         ctx.fill()
       }
 
-      // HP bar
       const bw = 22, bh = 3
       const bx = e.x - bw / 2
       const by = e.y - SIZE / 2 - 5
@@ -294,6 +357,18 @@ export class Game {
       ctx.fillStyle = ratio > 0.5 ? '#2ecc71' : ratio > 0.25 ? '#f39c12' : '#e74c3c'
       ctx.fillRect(bx, by, bw * ratio, bh)
     }
+  }
+
+  private drawParticles(): void {
+    const { ctx } = this
+    for (const p of this.particles) {
+      ctx.globalAlpha = Math.max(0, p.life / p.maxLife)
+      ctx.fillStyle = p.color
+      ctx.beginPath()
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    ctx.globalAlpha = 1
   }
 
   private drawProjectiles(): void {

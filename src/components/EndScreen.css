@@ -1,0 +1,99 @@
+.end-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.62);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Banner 9-slice card — 448x448, ~149px per slice */
+.end-card {
+  border-image: var(--banner-url) 149 fill / 56px stretch;
+  border-style: solid;
+  padding: 2rem 3rem;
+  min-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  text-align: center;
+}
+
+.end-title {
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: #3a2510;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0 rgba(255,220,120,0.5);
+  margin: 0;
+}
+
+.end-sub {
+  font-size: 0.95rem;
+  color: #5a3520;
+  margin: 0;
+}
+
+.end-stats {
+  display: flex;
+  gap: 2rem;
+  padding: 0.6rem 1.2rem;
+  background: rgba(0,0,0,0.1);
+  border-radius: 4px;
+}
+
+.end-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #7a5030;
+}
+
+.stat-val {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #3a2510;
+}
+
+.end-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.4rem;
+}
+
+/* Button 9-slice — 320x320, 107px slice */
+.end-btn {
+  border-image: var(--btn) 107 fill / 36px stretch;
+  border-style: solid;
+  background: none;
+  padding: 0.5rem 1.8rem;
+  min-width: 140px;
+  font-size: 1rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+  cursor: pointer;
+  transition: transform 0.08s, filter 0.1s;
+  user-select: none;
+}
+
+.end-btn:hover  { filter: brightness(1.12); transform: translateY(-2px); }
+.end-btn:active { border-image: var(--btn-p) 107 fill / 36px stretch; transform: translateY(1px); }
