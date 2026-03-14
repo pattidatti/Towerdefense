@@ -4,11 +4,31 @@ import './LevelSelect.css'
 
 const BASE = import.meta.env.BASE_URL
 
-const LEVELS = [
-  { id: 1, name: 'Level 1', unlocked: true },
-  { id: 2, name: 'Level 2', unlocked: false },
-  { id: 3, name: 'Level 3', unlocked: false },
-]
+function getUnlockedLevels(): number[] {
+  try {
+    const stored = localStorage.getItem('unlockedLevels')
+    return stored ? JSON.parse(stored) : [1]
+  } catch {
+    return [1]
+  }
+}
+
+export function unlockLevel(levelId: number): void {
+  const unlocked = getUnlockedLevels()
+  if (!unlocked.includes(levelId)) {
+    unlocked.push(levelId)
+    localStorage.setItem('unlockedLevels', JSON.stringify(unlocked))
+  }
+}
+
+function buildLevels() {
+  const unlocked = getUnlockedLevels()
+  return [
+    { id: 1, name: 'Level 1', unlocked: true },
+    { id: 2, name: 'Level 2', unlocked: unlocked.includes(2) },
+    { id: 3, name: 'Level 3', unlocked: unlocked.includes(3) },
+  ]
+}
 
 const paperUrl = `url("${BASE}Assets/UI Elements/UI Elements/Papers/SpecialPaper.png")`
 const bannerUrl = `url("${BASE}Assets/UI Elements/UI Elements/Banners/Banner.png")`
@@ -17,6 +37,7 @@ const btnPressed = `url("${BASE}Assets/UI Elements/UI Elements/Buttons/BigBlueBu
 
 export default function LevelSelect() {
   const navigate = useNavigate()
+  const levels = buildLevels()
 
   return (
     <div className="level-select">
@@ -32,7 +53,7 @@ export default function LevelSelect() {
         </div>
 
         <div className="level-grid">
-          {LEVELS.map((level) => (
+          {levels.map((level) => (
             <button
               key={level.id}
               className={`level-card ${level.unlocked ? 'unlocked' : 'locked'}`}

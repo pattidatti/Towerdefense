@@ -12,6 +12,12 @@ export interface GameSprites {
   magicBuilding: HTMLImageElement   // Purple Monastery
 }
 
+function loadImageWithError(url: string): Promise<HTMLImageElement> {
+  return loadImage(url).catch(() => {
+    throw new Error(`Kunne ikke laste bilde: ${url}`)
+  })
+}
+
 export async function loadGameSprites(base: string): Promise<GameSprites> {
   const p = (path: string) => `${base}${path}`
 
@@ -19,8 +25,8 @@ export async function loadGameSprites(base: string): Promise<GameSprites> {
   const orc    = new SpriteSheet(p('Assets/Units/Red Units/Warrior/Warrior_Run.png'), UNIT_ANIMS)
 
   const [arrowBuilding, magicBuilding] = await Promise.all([
-    loadImage(p('Assets/Buildings/Blue Buildings/Archery.png')),
-    loadImage(p('Assets/Buildings/Purple Buildings/Monastery.png')),
+    loadImageWithError(p('Assets/Buildings/Blue Buildings/Archery.png')),
+    loadImageWithError(p('Assets/Buildings/Purple Buildings/Monastery.png')),
     goblin.waitForLoad(),
     orc.waitForLoad(),
   ])
