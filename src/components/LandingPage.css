@@ -1,52 +1,75 @@
 .landing {
+  position: relative;
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1a1a2e url('/Towerdefense/Assets/Terrain/Tileset/Tilemap_color1.png') repeat;
-  image-rendering: pixelated;
+  overflow: hidden;
 }
 
-.landing-content {
+/* Darkening overlay over the tiled background */
+.landing::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.landing-card {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem;
-  padding: 3rem 4rem;
-  background: rgba(0, 0, 0, 0.6);
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
+  gap: 2.5rem;
+}
+
+/* Banner as 9-slice background — 448x448 image, 3 equal slices = ~149px each */
+.landing-banner {
+  border-image: var(--banner-url) 149 fill / 60px stretch;
+  border-style: solid;
+  padding: 1.5rem 4rem;
+  min-width: 360px;
+  text-align: center;
 }
 
 .landing-title {
-  font-size: 3rem;
-  letter-spacing: 4px;
+  font-size: 2.8rem;
+  letter-spacing: 5px;
   text-transform: uppercase;
-  color: #f0d070;
-  text-shadow: 2px 2px 0 #000, 4px 4px 8px rgba(0,0,0,0.8);
-  image-rendering: pixelated;
+  color: #3a2510;
+  text-shadow: 1px 1px 0 rgba(255, 220, 120, 0.6);
+  font-weight: 900;
+  margin: 0;
 }
 
-.btn-primary {
-  padding: 1rem 2.5rem;
-  font-size: 1.2rem;
+/* Button as 9-slice — 320x320 image, 3 equal slices = ~107px each */
+.game-btn {
+  border-image: var(--btn-regular) 107 fill / 42px stretch;
+  border-style: solid;
+  background: none;
+  padding: 0.7rem 2.8rem;
+  min-width: 220px;
+  font-size: 1.25rem;
+  font-weight: bold;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: #fff;
-  background: #2a7fd4;
-  border: 3px solid #1a5fa0;
-  border-radius: 4px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
   cursor: pointer;
-  transition: transform 0.1s, background 0.15s;
+  transition: transform 0.08s;
+  user-select: none;
 }
 
-.btn-primary:hover {
-  background: #3a8fe4;
+.game-btn:hover {
   transform: translateY(-2px);
+  filter: brightness(1.1);
 }
 
-.btn-primary:active {
-  background: #1a5fa0;
+.game-btn:active,
+.game-btn[data-pressed] {
+  border-image: var(--btn-pressed) 107 fill / 42px stretch;
   transform: translateY(1px);
 }

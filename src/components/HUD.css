@@ -1,0 +1,128 @@
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* ── Top bar ── */
+.hud-top {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 0 1rem;
+  height: 44px;
+  background: rgba(0, 0, 0, 0.82);
+  border-bottom: 1px solid #333;
+  pointer-events: all;
+}
+
+.hud-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.hud-icon { font-size: 1rem; }
+
+.hud-value {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #f0d070;
+  min-width: 2ch;
+}
+.hud-value.danger { color: #e74c3c; }
+
+.hud-label {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-right: 0.2rem;
+}
+
+.hud-btn {
+  padding: 0.3rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  border-radius: 3px;
+  cursor: pointer;
+  border: none;
+  transition: filter 0.1s, transform 0.08s;
+}
+.hud-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+.hud-btn:active { transform: translateY(0); }
+
+.wave-btn {
+  background: #27ae60;
+  color: #fff;
+  margin-left: auto;
+}
+
+.quit-btn {
+  background: transparent;
+  color: #888;
+  border: 1px solid #444 !important;
+  margin-left: auto;
+}
+.quit-btn:hover { color: #fff; border-color: #888 !important; }
+
+.hud-badge {
+  padding: 0.25rem 0.7rem;
+  border-radius: 3px;
+  font-size: 0.82rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+.hud-badge.active  { background: #1a4a6a; color: #7fd4ff; }
+.hud-badge.victory { background: #1a5a1a; color: #7fff7f; }
+.hud-badge.gameover { background: #5a1a1a; color: #ff7f7f; }
+
+/* ── Tower bar ── */
+.hud-towers {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  background: rgba(0, 0, 0, 0.65);
+  border-bottom: 1px solid #222;
+  pointer-events: all;
+}
+
+.tower-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #ddd;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.1s, border-color 0.1s;
+}
+.tower-btn:hover { background: rgba(255,255,255,0.12); border-color: #888; }
+.tower-btn.active { background: rgba(100,200,255,0.18); border-color: #7fd4ff; color: #fff; }
+
+.tower-icon {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  border: 1px solid rgba(255,255,255,0.3);
+  flex-shrink: 0;
+}
+
+.tower-name { color: inherit; }
+.tower-cost { color: #f0d070; font-size: 0.75rem; }
+
+.hud-hint {
+  font-size: 0.78rem;
+  color: #7fd4ff;
+  font-style: italic;
+  margin-left: 0.5rem;
+}
